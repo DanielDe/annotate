@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var items = (event.clipboardData || event.originalEvent.clipboardData).items;
 
         if (items[0].type.indexOf('image') !== 0) {
-            alert('Paste an *image*, dummy');
+            alert('Paste an image, please');
             return;
         }
         
@@ -40,34 +40,24 @@ document.addEventListener('DOMContentLoaded', function() {
         reader.readAsDataURL(blob);
     };
 
-    // Set up undo button.
-    document.getElementById('undo-button').onclick = function() {
+    // Set up undo button and keyboard shortcut.
+    function undo() {
         window.arrows.pop();
     }
+    document.getElementById('undo-button').onclick = undo;
+    Mousetrap.bind('mod+z', undo);
 
     // Set up drag handlers.
     window.mouseDown = false;
     canvas.addEventListener('mousedown', function(event) {
         window.mouseDown = true;
 
-        window.arrows.push({
-            arrowBegin: {
-                x: event.layerX,
-                y: event.layerY
-            },
-            arrowEnd: {
-                x: event.layerX,
-                y: event.layerY
-            }
-        });
+        window.arrows.push(new Arrow(event.layerX, event.layerY, event.layerX, event.layerY));
     });
 
     canvas.addEventListener('mousemove', function(event) {
         if (window.mouseDown && window.arrows.length > 0) {
-            window.arrows[window.arrows.length - 1].arrowEnd = {
-                x: event.layerX,
-                y: event.layerY
-            };
+            window.arrows[window.arrows.length - 1].setEnd(event.layerX, event.layerY);
         }
     });
 
@@ -75,10 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.mouseDown = false;
         
         if (window.arrows.length > 0) {
-            window.arrows[window.arrows.length - 1].arrowEnd = {
-                x: event.layerX,
-                y: event.layerY
-            };
+            window.arrows[window.arrows.length - 1].setEnd(event.layerX, event.layerY);
         }
     });
 
@@ -106,13 +93,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Draw the arrows.
         window.arrows.forEach(function(arrow) {
-            context.beginPath();
-            
-            context.moveTo(arrow.arrowBegin.x, arrow.arrowBegin.y);
-            context.lineTo(arrow.arrowEnd.x, arrow.arrowEnd.y);
-
-            context.closePath();
-            context.stroke(); 
+            arrow.render(context);
         });
     }
 });
+
+function Arrow(beginX, beginY, endX, endY) {
+    this.begin = {
+        x: beginX,
+        y: beginY
+    };
+
+    this.setBegin = function(newX, newY) {
+        this.begin.x = newX;
+        this.begin.y = newY;
+    };
+
+    this.end = {
+        x: endX,
+        y: endY
+    };
+
+    this.setEnd = function(newX, newY) {
+        this.end.x = newX;
+        this.end.y = newY;
+    };
+
+    this.render = function(context) {
+        context.beginPath();
+
+        context.moveTo(this.begin.x, this.begin.y);
+        context.lineTo(this.end.x, this.end.y);
+
+        context.closePath();
+        context.stroke();
+    };
+}
