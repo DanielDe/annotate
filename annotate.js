@@ -1,9 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Reference to the image canvas.
     var canvas = document.getElementById('image-canvas');
+
+    // The current working image.
     window.currentImage = null;
 
-    window.arrowBegin = null;
-    window.arrowEnd = null;
+    // The arrows drawn on the image.
+    window.arrows = [];
     
     // Set up paste handler.
     document.onpaste = function(event) {
@@ -22,15 +25,14 @@ document.addEventListener('DOMContentLoaded', function() {
             var image = new Image();
             
             image.onload = function() {
-                // Resize the canvas.
+                // Resize the canvas to match the image.
                 canvas.height = '' + image.height;
                 canvas.width = '' + image.width;
 
-                var context = canvas.getContext('2d');
-                
-                context.drawImage(image, 0, 0);
-
                 window.currentImage = image;
+
+                // Trigger a redraw.
+                redraw();
             }
             image.src = imageDataURI;
         }; 
@@ -38,24 +40,31 @@ document.addEventListener('DOMContentLoaded', function() {
         reader.readAsDataURL(blob);
     };
 
+    // Set up undo button.
+    document.getElementById('undo-button').onclick = function() {
+        window.arrows.pop();
+    }
+
     // Set up drag handlers.
-    window.tracking = false;
+    window.mouseDown = false;
     canvas.addEventListener('mousedown', function(event) {
-        window.tracking = true;
-        
-        window.arrowBegin = {
-            x: event.layerX,
-            y: event.layerY
-        };
-        window.arrowEnd = {
-            x: event.layerX,
-            y: event.layerY
-        };
+        window.mouseDown = true;
+
+        window.arrows.push({
+            arrowBegin: {
+                x: event.layerX,
+                y: event.layerY
+            },
+            arrowEnd: {
+                x: event.layerX,
+                y: event.layerY
+            }
+        });
     });
 
     canvas.addEventListener('mousemove', function(event) {
-        if (window.tracking) {
-            window.arrowEnd = {
+        if (window.mouseDown && window.arrows.length > 0) {
+            window.arrows[window.arrows.length - 1].arrowEnd = {
                 x: event.layerX,
                 y: event.layerY
             };
@@ -63,18 +72,21 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     canvas.addEventListener('mouseup', function(event) {
-        window.tracking = false;
+        window.mouseDown = false;
         
-        window.arrowEnd = {
-            x: event.layerX,
-            y: event.layerY
-        };
+        if (window.arrows.length > 0) {
+            window.arrows[window.arrows.length - 1].arrowEnd = {
+                x: event.layerX,
+                y: event.layerY
+            };
+        }
     });
 
     var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame 
     requestAnimationFrame(redraw);
 
     function redraw() {
+        // Trigger another redraw later.
         requestAnimationFrame(redraw);
         
         if (!window.currentImage) {
@@ -82,21 +94,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         var context = canvas.getContext('2d');
-                
+        
+        // Draw the current working image.
         context.drawImage(window.currentImage, 0, 0);
+        
+        // Set up the style for drawing the arrows.
+        context.strokeStyle = 'red';
+        context.fillStyle = 'red';
+        context.lineWidth = 5;
+        context.lineCap = 'round';
 
-        if (window.arrowBegin) {
-            context.strokeStyle = 'red';
-            context.fillStyle = 'red';
-            context.lineWidth = 5;
-            
+        // Draw the arrows.
+        window.arrows.forEach(function(arrow) {
             context.beginPath();
             
-            context.moveTo(window.arrowBegin.x, window.arrowBegin.y);
-            context.lineTo(window.arrowEnd.x, window.arrowEnd.y);
+            context.moveTo(arrow.arrowBegin.x, arrow.arrowBegin.y);
+            context.lineTo(arrow.arrowEnd.x, arrow.arrowEnd.y);
 
             context.closePath();
-            context.stroke();
-        }
+            context.stroke(); 
+        });
     }
 });
