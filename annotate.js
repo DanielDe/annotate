@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Reference to the image canvas.
-    var canvas = document.getElementById('image-canvas');
+    window.canvas = document.getElementById('image-canvas');
 
     // The current working image.
     window.currentImage = null;
@@ -81,16 +81,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         var context = canvas.getContext('2d');
+
+        // Clear the canvas.
+        context.clearRect(0, 0, canvas.width, canvas.height);
         
         // Draw the current working image.
         context.drawImage(window.currentImage, 0, 0);
         
-        // Set up the style for drawing the arrows.
-        context.strokeStyle = 'red';
-        context.fillStyle = 'red';
-        context.lineWidth = 5;
-        context.lineCap = 'round';
-
         // Draw the arrows.
         window.arrows.forEach(function(arrow) {
             arrow.render(context);
@@ -120,12 +117,57 @@ function Arrow(beginX, beginY, endX, endY) {
     };
 
     this.render = function(context) {
+        var arrowColor = 'red';
+        context.strokeStyle = arrowColor;
+        context.fillStyle = arrowColor;
+        context.lineWidth = 2;
+        context.lineCap = 'butt';
+
+        // Draw the line of the arrow.
         context.beginPath();
 
         context.moveTo(this.begin.x, this.begin.y);
         context.lineTo(this.end.x, this.end.y);
 
-        context.closePath();
+        context.stroke();
+
+        // Draw the head of the arrow.
+        var arrowHeadBaseHalfLength = 15;
+        var arrowHeadHeight = 30;
+
+        var deltaX = this.end.x - this.begin.x;
+        var deltaY = this.end.y - this.begin.y;
+        var lineLength = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        var baseX = this.end.x - deltaX * arrowHeadHeight / lineLength;
+        var baseY = this.end.y - deltaY * arrowHeadHeight / lineLength;
+
+        var rightCornerPoint = {
+            x: baseX + deltaY * arrowHeadBaseHalfLength / lineLength,
+            y: baseY - deltaX * arrowHeadBaseHalfLength / lineLength
+        };
+        var leftCornerPoint = {
+            x: baseX - deltaY * arrowHeadBaseHalfLength / lineLength,
+            y: baseY + deltaX * arrowHeadBaseHalfLength / lineLength
+        };
+
+        context.beginPath();
+
+        var angle = Math.atan2(this.end.y - this.begin.y, this.end.x - this.begin.x);
+        context.moveTo(this.begin.x, this.begin.y);
+        context.lineTo(this.end.x, this.end.y);
+        context.lineTo(this.end.x - arrowHeadHeight * Math.cos(angle - Math.PI / 6),
+                       this.end.y - arrowHeadHeight * Math.sin(angle - Math.PI / 6));
+        context.moveTo(this.end.x, this.end.y);
+        context.lineTo(this.end.x - arrowHeadHeight * Math.cos(angle + Math.PI / 6),
+                       this.end.y - arrowHeadHeight * Math.sin(angle + Math.PI / 6));
+
+        
+        
+        // context.moveTo(this.end.x, this.end.y);
+        // context.lineTo(rightCornerPoint.x, rightCornerPoint.y);
+        // context.lineTo(leftCornerPoint.x, leftCornerPoint.y);
+        
         context.stroke();
     };
 }
