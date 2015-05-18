@@ -1,3 +1,5 @@
+'use strict'
+
 document.addEventListener('DOMContentLoaded', function() {
     // Reference to the image canvas.
     window.canvas = document.getElementById('image-canvas');
@@ -5,8 +7,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // The current working image.
     window.currentImage = null;
 
-    // The arrows drawn on the image.
-    window.arrows = [];
+    // The annotation objects drawn on the image.
+    window.annotationObjects = [];
+
+    // The currently selected annotation object type.
+    window.currentAnnotationObjectType = 'arrow';
     
     // Set up paste handler.
     document.onpaste = function(event) {
@@ -42,30 +47,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Set up undo button and keyboard shortcut.
     function undo() {
-        window.arrows.pop();
+        window.annotationObjects.pop();
     }
     document.getElementById('undo-button').onclick = undo;
     Mousetrap.bind('mod+z', undo);
+
+    // Set up annotation object type button handlers.
+    function selectArrowType() {
+        window.currentAnnotationObjectType = 'arrow';
+    }
+    document.getElementById('arrow-button').onclick = selectArrowType;
+    Mousetrap.bind('a', selectArrowType)
+    
+    function selectBoxType() {
+        window.currentAnnotationObjectType = 'box';
+    }
+    document.getElementById('box-button').onclick = selectBoxType;
+    Mousetrap.bind('b', selectBoxType);
 
     // Set up drag handlers.
     window.mouseDown = false;
     canvas.addEventListener('mousedown', function(event) {
         window.mouseDown = true;
 
-        window.arrows.push(new Arrow(event.layerX, event.layerY, event.layerX, event.layerY));
+        var annotationObjectClass = {
+            arrow: Arrow,
+            box: Box
+        }[window.currentAnnotationObjectType];
+        window.annotationObjects.push(new annotationObjectClass(event.layerX, event.layerY, event.layerX, event.layerY));
     });
 
     canvas.addEventListener('mousemove', function(event) {
-        if (window.mouseDown && window.arrows.length > 0) {
-            window.arrows[window.arrows.length - 1].setEnd(event.layerX, event.layerY);
+        if (window.mouseDown && window.annotationObjects.length > 0) {
+            window.annotationObjects[window.annotationObjects.length - 1].setEnd(event.layerX, event.layerY);
         }
     });
 
     canvas.addEventListener('mouseup', function(event) {
         window.mouseDown = false;
         
-        if (window.arrows.length > 0) {
-            window.arrows[window.arrows.length - 1].setEnd(event.layerX, event.layerY);
+        if (window.annotationObjects.length > 0) {
+            window.annotationObjects[window.annotationObjects.length - 1].setEnd(event.layerX, event.layerY);
         }
     });
 
@@ -73,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
     requestAnimationFrame(redraw);
 
     function redraw() {
-        // Trigger another redraw later.
         requestAnimationFrame(redraw);
         
         if (!window.currentImage) {
@@ -88,91 +109,93 @@ document.addEventListener('DOMContentLoaded', function() {
         // Draw the current working image.
         context.drawImage(window.currentImage, 0, 0);
         
-        // Draw the arrows.
-        window.arrows.forEach(function(arrow) {
+        // Draw the annotation objects.
+        window.annotationObjects.forEach(function(arrow) {
             arrow.render(context);
         });
     }
 });
 
-function Arrow(beginX, beginY, endX, endY) {
-    this.begin = {
-        x: beginX,
-        y: beginY
-    };
+class AnnotationObject {
+    constructor(beginX, beginY, endX, endY) {
+        this.begin = {
+            x: beginX,
+            y: beginY
+        };
 
-    this.setBegin = function(newX, newY) {
+        this.end = {
+            x: endX,
+            y: endY
+        };
+    }
+
+    setBegin(newX, newY) {
         this.begin.x = newX;
         this.begin.y = newY;
     };
 
-    this.end = {
-        x: endX,
-        y: endY
-    };
-
-    this.setEnd = function(newX, newY) {
+    setEnd(newX, newY) {
         this.end.x = newX;
         this.end.y = newY;
     };
+}
 
-    this.render = function(context) {
+class Arrow extends AnnotationObject {
+    render(context) {
         var arrowColor = 'red';
         context.strokeStyle = arrowColor;
         context.fillStyle = arrowColor;
-        context.lineWidth = 2;
+        context.lineWidth = 10;
         context.lineCap = 'round';
 
-        // Draw the line of the arrow.
-        context.beginPath();
-
-        context.moveTo(this.begin.x, this.begin.y);
-        context.lineTo(this.end.x, this.end.y);
-
-        context.stroke();
-
-        // Draw the head of the arrow.
-        var arrowHeadBaseHalfLength = 15;
         var arrowHeadHeight = 30;
-
-        var deltaX = this.end.x - this.begin.x;
-        var deltaY = this.end.y - this.begin.y;
-        var lineLength = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-        var baseX = this.end.x - deltaX * arrowHeadHeight / lineLength;
-        var baseY = this.end.y - deltaY * arrowHeadHeight / lineLength;
-
-        var rightCornerPoint = {
-            x: baseX + deltaY * arrowHeadBaseHalfLength / lineLength,
-            y: baseY - deltaX * arrowHeadBaseHalfLength / lineLength
-        };
-        var leftCornerPoint = {
-            x: baseX - deltaY * arrowHeadBaseHalfLength / lineLength,
-            y: baseY + deltaX * arrowHeadBaseHalfLength / lineLength
-        };
 
         context.beginPath();
 
         var angle = Math.atan2(this.end.y - this.begin.y, this.end.x - this.begin.x);
+
+        // Draw the arrow body.
         context.moveTo(this.begin.x, this.begin.y);
         context.lineTo(this.end.x, this.end.y);
         
-        context.moveTo(0, 0);
+        // Draw one side of the arrow head.
         context.moveTo(this.end.x, this.end.y);
         context.lineTo(this.end.x - arrowHeadHeight * Math.cos(angle - Math.PI / 6),
                        this.end.y - arrowHeadHeight * Math.sin(angle - Math.PI / 6));
         
-        context.moveTo(0, 0);
+        // Draw the other side of the arrow head.
         context.moveTo(this.end.x, this.end.y);
         context.lineTo(this.end.x - arrowHeadHeight * Math.cos(angle + Math.PI / 6),
                        this.end.y - arrowHeadHeight * Math.sin(angle + Math.PI / 6));
-
-        
-        
-        // context.moveTo(this.end.x, this.end.y);
-        // context.lineTo(rightCornerPoint.x, rightCornerPoint.y);
-        // context.lineTo(leftCornerPoint.x, leftCornerPoint.y);
         
         context.stroke();
     };
+}
+
+class Box extends AnnotationObject {
+    height() {
+        return this.end.y - this.begin.y;
+    }
+
+    width() {
+        return this.end.x - this.begin.x;
+    }
+    
+    render(context) {
+        var boxColor = 'blue';
+        context.strokeStyle = boxColor;
+        context.fillStyle = boxColor;
+        context.lineWidth = 10;
+        context.lineCap = 'round';
+
+        context.beginPath();
+
+        context.moveTo(this.begin.x, this.begin.y);
+        context.lineTo(this.begin.x + this.width(), this.begin.y);
+        context.lineTo(this.begin.x + this.width(), this.begin.y + this.height());
+        context.lineTo(this.begin.x, this.begin.y + this.height());
+        context.lineTo(this.begin.x, this.begin.y);
+
+        context.stroke();
+    }
 }
