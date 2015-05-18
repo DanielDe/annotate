@@ -121,7 +121,7 @@ function Arrow(beginX, beginY, endX, endY) {
         context.strokeStyle = arrowColor;
         context.fillStyle = arrowColor;
         context.lineWidth = 2;
-        context.lineCap = 'butt';
+        context.lineCap = 'round';
 
         // Draw the line of the arrow.
         context.beginPath();
@@ -156,8 +156,13 @@ function Arrow(beginX, beginY, endX, endY) {
         var angle = Math.atan2(this.end.y - this.begin.y, this.end.x - this.begin.x);
         context.moveTo(this.begin.x, this.begin.y);
         context.lineTo(this.end.x, this.end.y);
+        
+        context.moveTo(0, 0);
+        context.moveTo(this.end.x, this.end.y);
         context.lineTo(this.end.x - arrowHeadHeight * Math.cos(angle - Math.PI / 6),
                        this.end.y - arrowHeadHeight * Math.sin(angle - Math.PI / 6));
+        
+        context.moveTo(0, 0);
         context.moveTo(this.end.x, this.end.y);
         context.lineTo(this.end.x - arrowHeadHeight * Math.cos(angle + Math.PI / 6),
                        this.end.y - arrowHeadHeight * Math.sin(angle + Math.PI / 6));
