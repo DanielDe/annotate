@@ -52,18 +52,60 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('undo-button').onclick = undo;
     Mousetrap.bind('mod+z', undo);
 
+    function render() {
+        var imgTag = document.createElement('img');
+        imgTag.src = canvas.toDataURL('image/png');
+
+        var imageOutputArea = document.getElementById('image-output')
+        removeChildren(imageOutputArea);
+
+        imageOutputArea.appendChild(imgTag);
+    }
+    document.getElementById('render-button').onclick = render;
+    Mousetrap.bind('r', render);
+
+    function removeChildren(element) {
+        while (element.firstChild) {
+            element.removeChild(element.firstChild);
+        }
+    }
+
+    function deactivateAnnotationObjectButtons() {
+        Array.prototype.slice.call(document.querySelectorAll('.annotation-object-button')).forEach(function(button) {
+            button.classList.remove('active');
+        });
+    }
+
     // Set up annotation object type button handlers.
     function selectArrowType() {
         window.currentAnnotationObjectType = 'arrow';
+
+        deactivateAnnotationObjectButtons();
+
+        document.getElementById('arrow-button').classList.add('active');
     }
     document.getElementById('arrow-button').onclick = selectArrowType;
     Mousetrap.bind('a', selectArrowType)
     
     function selectBoxType() {
         window.currentAnnotationObjectType = 'box';
+
+        deactivateAnnotationObjectButtons();
+
+        document.getElementById('box-button').classList.add('active');
     }
     document.getElementById('box-button').onclick = selectBoxType;
     Mousetrap.bind('b', selectBoxType);
+
+    function selectCircleType() {
+        window.currentAnnotationObjectType = 'circle';
+
+        deactivateAnnotationObjectButtons();
+        
+        document.getElementById('circle-button').classList.add('active');
+    }
+    document.getElementById('circle-button').onclick = selectCircleType;
+    Mousetrap.bind('c', selectCircleType);
 
     // Set up drag handlers.
     window.mouseDown = false;
@@ -72,7 +114,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var annotationObjectClass = {
             arrow: Arrow,
-            box: Box
+            box: Box,
+            circle: Circle
         }[window.currentAnnotationObjectType];
         window.annotationObjects.push(new annotationObjectClass(event.layerX, event.layerY, event.layerX, event.layerY));
     });
@@ -89,6 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.annotationObjects.length > 0) {
             window.annotationObjects[window.annotationObjects.length - 1].setEnd(event.layerX, event.layerY);
         }
+
+        render();
     });
 
     var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame 
@@ -195,6 +240,36 @@ class Box extends AnnotationObject {
         context.lineTo(this.begin.x + this.width(), this.begin.y + this.height());
         context.lineTo(this.begin.x, this.begin.y + this.height());
         context.lineTo(this.begin.x, this.begin.y);
+
+        context.stroke();
+    }
+}
+
+class Circle extends AnnotationObject {
+    center() {
+        return {
+            x: this.begin.x,
+            y: this.begin.y
+        };
+    }
+    
+    radius() {
+        var dx = this.end.x - this.begin.x;
+        var dy = this.end.y - this.begin.y;
+        return Math.sqrt(dx * dx + dy * dy) / 2;
+    }
+
+    render(context) {
+        var circleColor = 'green';
+        context.strokeStyle = circleColor;
+        context.fillStyle = circleColor;
+        context.lineWidth = 10;
+        context.lineCap = 'round';
+
+        context.beginPath();
+
+        var center = this.center();
+        context.arc(center.x, center.y, this.radius(), 0, Math.PI * 2);
 
         context.stroke();
     }

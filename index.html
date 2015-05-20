@@ -9,17 +9,21 @@
 
         <div>
             <button id="undo-button">Undo</button>
+            <button id="render-button">Render</button>
         </div>
 
         <!-- TODO: replace this br with proper styling. -->
         <br>
         
         <div>
-            <button id="arrow-button">Arrow</button>
-            <button id="box-button">Box</button>
+            <button class="annotation-object-button active" id="arrow-button">Arrow</button>
+            <button class="annotation-object-button" id="box-button">Box</button>
+            <button class="annotation-object-button" id="circle-button">Circle</button>
         </div>
 
         <canvas id="image-canvas" height="300" width="300"></canvas>
+
+        <div id="image-output"></div>
         
         <script type="text/javascript" src="mousetrap.min.js"></script>
         <script type="text/javascript" src="annotate.js"></script>

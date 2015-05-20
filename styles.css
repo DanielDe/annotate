@@ -5,3 +5,7 @@ body {
 canvas {
     margin-top: 10px;
 }
+
+.active {
+    background-color: blue;
+}
