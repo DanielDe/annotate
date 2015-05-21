@@ -57,6 +57,8 @@ document.addEventListener('DOMContentLoaded', function() {
     Mousetrap.bind('mod+z', undo);
 
     function render() {
+        document.getElementById('render-container').style.display = 'block';
+        
         var imgTag = document.createElement('img');
         imgTag.src = canvas.toDataURL('image/png');
 
@@ -67,6 +69,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     document.getElementById('render-button').onclick = render;
     Mousetrap.bind('r', render);
+
+    function hideRenderWindow() {
+        document.getElementById('render-container').style.display = 'none';
+    }
+    Mousetrap.bind('escape', hideRenderWindow);
 
     function showControls() {
         document.getElementById('paste-image-text').style.display = 'none';
@@ -144,8 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.annotationObjects.length > 0) {
             window.annotationObjects[window.annotationObjects.length - 1].setEnd(event.layerX, event.layerY);
         }
-
-        render();
     });
 
     var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame 

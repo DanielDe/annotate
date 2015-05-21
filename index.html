@@ -7,6 +7,10 @@
     <body>
         <h2 id="paste-image-text">Paste an image!</h2>
 
+        <div id="render-container">
+            <div id="image-output"></div>
+        </div>
+
         <div class="controls">
             <button id="undo-button">Undo</button>
             <button id="render-button">Render</button>
@@ -25,8 +29,6 @@
             <canvas id="image-canvas" height="300" width="300"></canvas>
         </div>
 
-        <div id="image-output"></div>
-        
         <script type="text/javascript" src="mousetrap.min.js"></script>
         <script type="text/javascript" src="annotate.js"></script>
     </body>
