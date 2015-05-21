@@ -34,10 +34,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 canvas.height = '' + image.height;
                 canvas.width = '' + image.width;
 
+                document.getElementById('canvas-container').style.width = image.width + 'px';
+
                 window.currentImage = image;
 
                 // Trigger a redraw.
                 redraw();
+
+                showControls();
             }
             image.src = imageDataURI;
         }; 
@@ -63,6 +67,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     document.getElementById('render-button').onclick = render;
     Mousetrap.bind('r', render);
+
+    function showControls() {
+        document.getElementById('paste-image-text').style.display = 'none';
+        
+        Array.prototype.slice.call(document.querySelectorAll('.controls')).forEach(function(controlDiv) {
+            controlDiv.style.display = 'block';
+        });
+    }
 
     function removeChildren(element) {
         while (element.firstChild) {
