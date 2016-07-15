@@ -1,6 +1,12 @@
 'use strict'
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Currently only works in Chrome, so check for that first.
+    if (window.navigator.userAgent.indexOf('Chrome') === -1) {
+        document.getElementById('paste-image-text').innerHTML = 'Currently this page only works in Chrome. <br><span style="font-size: 20px">I know, I know... it\'s on my todo list.</span>';
+        return;
+    }
+    
     // Reference to the image canvas.
     window.canvas = document.getElementById('image-canvas');
 
@@ -42,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 redraw();
 
                 showControls();
-            }
+            };
             image.src = imageDataURI;
         }; 
         
@@ -153,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame 
+    var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame; 
     requestAnimationFrame(redraw);
 
     function redraw() {
