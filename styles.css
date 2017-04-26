@@ -4,7 +4,7 @@ body {
     position: relative;
 }
 
-#paste-image-text {
+#paste-image-text, #drop-target {
     color: rgba(255, 255, 255, 0.8);
     font-size: 32px;
     font-weight: normal;
@@ -51,4 +51,34 @@ body {
     top: 0;
     left: 0;
     right: 0;
+}
+
+#drop-layer {
+  position: fixed;
+  height: auto;
+  bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.5);
+}
+
+#drop-overlay {
+  width: 640px;
+  height: 400px;
+  background-color: #2A2A2A;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#drop-target {
+  padding: 50px;
+  border-radius: 10px;
+  border: 5px dashed white;
 }

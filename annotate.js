@@ -7,8 +7,58 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    function readFile(file) {
+      var reader = new FileReader();
+
+      reader.onload = function(event) {
+        var imageDataURI = event.target.result;
+        var image = new Image();
+
+        image.onload = function() {
+          // Resize the canvas to match the image.
+          canvas.height = '' + image.height;
+          canvas.width = '' + image.width;
+
+          document.getElementById('canvas-container').style.width = image.width + 'px';
+
+          window.currentImage = image;
+
+          // Trigger a redraw.
+          redraw();
+
+          showControls();
+        };
+        image.src = imageDataURI;
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+
     // Reference to the image canvas.
     window.canvas = document.getElementById('image-canvas');
+
+    // Drop handler
+    var dropLayer = document.getElementById('drop-layer');
+
+    document.ondrop = function(event) {
+      event.preventDefault();
+      readFile(event.dataTransfer.files[0]);
+      dropLayer.style.display = 'none';
+      return false;
+    }
+
+    document.ondragover = function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      dropLayer.style.display = 'flex';
+    }
+
+    dropLayer.ondragleave = function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      dropLayer.style.display = 'none';
+    }
 
     // The current working image.
     window.currentImage = null;
@@ -28,31 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        var blob = items[0].getAsFile();
-        var reader = new FileReader();
-
-        reader.onload = function(event) {
-            var imageDataURI = event.target.result;
-            var image = new Image();
-
-            image.onload = function() {
-                // Resize the canvas to match the image.
-                canvas.height = '' + image.height;
-                canvas.width = '' + image.width;
-
-                document.getElementById('canvas-container').style.width = image.width + 'px';
-
-                window.currentImage = image;
-
-                // Trigger a redraw.
-                redraw();
-
-                showControls();
-            };
-            image.src = imageDataURI;
-        };
-
-        reader.readAsDataURL(blob);
+        readFile(items[0].getAsFile());
     };
 
     // Set up undo button and keyboard shortcut.
@@ -160,8 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame;
-    requestAnimationFrame(redraw);
-
+    requestAnimationFrame(redraw); 
     function redraw() {
         requestAnimationFrame(redraw);
 
