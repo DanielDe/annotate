@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('paste-image-text').innerHTML = 'Currently this page only works in Chrome. <br><span style="font-size: 20px">I know, I know... it\'s on my todo list.</span>';
         return;
     }
-    
+
     // Reference to the image canvas.
     window.canvas = document.getElementById('image-canvas');
 
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // The currently selected annotation object type.
     window.currentAnnotationObjectType = 'arrow';
-    
+
     // Set up paste handler.
     document.onpaste = function(event) {
         var items = (event.clipboardData || event.originalEvent.clipboardData).items;
@@ -27,14 +27,14 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Paste an image, please');
             return;
         }
-        
+
         var blob = items[0].getAsFile();
         var reader = new FileReader();
-        
+
         reader.onload = function(event) {
             var imageDataURI = event.target.result;
             var image = new Image();
-            
+
             image.onload = function() {
                 // Resize the canvas to match the image.
                 canvas.height = '' + image.height;
@@ -50,8 +50,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 showControls();
             };
             image.src = imageDataURI;
-        }; 
-        
+        };
+
         reader.readAsDataURL(blob);
     };
 
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function render() {
         document.getElementById('render-container').style.display = 'block';
-        
+
         var imgTag = document.createElement('img');
         imgTag.src = canvas.toDataURL('image/png');
 
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showControls() {
         document.getElementById('paste-image-text').style.display = 'none';
-        
+
         Array.prototype.slice.call(document.querySelectorAll('.controls')).forEach(function(controlDiv) {
             controlDiv.style.display = 'block';
         });
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     document.getElementById('arrow-button').onclick = selectArrowType;
     Mousetrap.bind('a', selectArrowType)
-    
+
     function selectBoxType() {
         window.currentAnnotationObjectType = 'box';
 
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.currentAnnotationObjectType = 'circle';
 
         deactivateAnnotationObjectButtons();
-        
+
         document.getElementById('circle-button').classList.add('active');
     }
     document.getElementById('circle-button').onclick = selectCircleType;
@@ -153,18 +153,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     canvas.addEventListener('mouseup', function(event) {
         window.mouseDown = false;
-        
+
         if (window.annotationObjects.length > 0) {
             window.annotationObjects[window.annotationObjects.length - 1].setEnd(event.layerX, event.layerY);
         }
     });
 
-    var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame; 
+    var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame;
     requestAnimationFrame(redraw);
 
     function redraw() {
         requestAnimationFrame(redraw);
-        
+
         if (!window.currentImage) {
             return;
         }
@@ -173,10 +173,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Clear the canvas.
         context.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         // Draw the current working image.
         context.drawImage(window.currentImage, 0, 0);
-        
+
         // Draw the annotation objects.
         window.annotationObjects.forEach(function(arrow) {
             arrow.render(context);
@@ -225,17 +225,17 @@ class Arrow extends AnnotationObject {
         // Draw the arrow body.
         context.moveTo(this.begin.x, this.begin.y);
         context.lineTo(this.end.x, this.end.y);
-        
+
         // Draw one side of the arrow head.
         context.moveTo(this.end.x, this.end.y);
         context.lineTo(this.end.x - arrowHeadHeight * Math.cos(angle - Math.PI / 6),
                        this.end.y - arrowHeadHeight * Math.sin(angle - Math.PI / 6));
-        
+
         // Draw the other side of the arrow head.
         context.moveTo(this.end.x, this.end.y);
         context.lineTo(this.end.x - arrowHeadHeight * Math.cos(angle + Math.PI / 6),
                        this.end.y - arrowHeadHeight * Math.sin(angle + Math.PI / 6));
-        
+
         context.stroke();
     };
 }
@@ -248,7 +248,7 @@ class Box extends AnnotationObject {
     width() {
         return this.end.x - this.begin.x;
     }
-    
+
     render(context) {
         var boxColor = 'blue';
         context.strokeStyle = boxColor;
@@ -275,7 +275,7 @@ class Circle extends AnnotationObject {
             y: this.begin.y
         };
     }
-    
+
     radius() {
         var dx = this.end.x - this.begin.x;
         var dy = this.end.y - this.begin.y;
