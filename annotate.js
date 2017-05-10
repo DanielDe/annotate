@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var imgTag = document.createElement('img');
     imgTag.src = canvas.toDataURL('image/png');
 
-    var imageOutputArea = document.getElementById('image-output')
+    var imageOutputArea = document.getElementById('image-output');
     removeChildren(imageOutputArea);
 
     imageOutputArea.appendChild(imgTag);
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('arrow-button').classList.add('active');
   }
   document.getElementById('arrow-button').onclick = selectArrowType;
-  Mousetrap.bind('a', selectArrowType)
+  Mousetrap.bind('a', selectArrowType);
 
   function selectBoxType() {
     window.currentAnnotationObjectType = 'box';
@@ -160,6 +160,16 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('circle-button').onclick = selectCircleType;
   Mousetrap.bind('c', selectCircleType);
 
+  function selectTextType() {
+    window.currentAnnotationObjectType = 'text';
+
+    deactivateAnnotationObjectButtons();
+
+    document.getElementById('text-button').classList.add('active');
+  }
+  document.getElementById('text-button').onclick = selectTextType;
+  Mousetrap.bind('t', selectTextType);
+
   // Set up drag handlers.
   window.mouseDown = false;
   window.canvas.addEventListener('mousedown', function(event) {
@@ -168,9 +178,19 @@ document.addEventListener('DOMContentLoaded', function() {
     var annotationObjectClass = {
       arrow: Arrow,
       box: Box,
-      circle: Circle
+      circle: Circle,
+      text: Text
     }[window.currentAnnotationObjectType];
-    window.annotationObjects.push(new annotationObjectClass(event.layerX, event.layerY, event.layerX, event.layerY));
+    var annotationObject = null;
+    if (annotationObjectClass === Text) {
+      var text = window.prompt("Enter text:", "");
+      if (text !== null && text !== "")
+        annotationObject = new Text(event.layerX, event.layerY, event.layerX, event.layerY, text);
+    } else {
+      annotationObject = new annotationObjectClass(event.layerX, event.layerY, event.layerX, event.layerY);
+    }
+    if (annotationObject !== null)
+      window.annotationObjects.push(annotationObject);
   });
 
   window.canvas.addEventListener('mousemove', function(event) {
@@ -205,8 +225,10 @@ document.addEventListener('DOMContentLoaded', function() {
     context.drawImage(window.currentImage, 0, 0);
 
     // Draw the annotation objects.
-    window.annotationObjects.forEach(function(arrow) {
-      arrow.render(context);
+    window.annotationObjects.forEach(function(annotationObject) {
+      context.save();
+      annotationObject.render(context);
+      context.restore();
     });
   }
 });
@@ -322,5 +344,20 @@ class Circle extends AnnotationObject {
     context.arc(center.x, center.y, this.radius(), 0, Math.PI * 2);
 
     context.stroke();
+  }
+}
+
+class Text extends AnnotationObject {
+  constructor(beginX, beginY, endX, endY, text) {
+    super(beginX, beginY, endX, endY);
+    this.text = text;
+  }
+
+  render(context) {
+    context.font = '32px Arial';
+    context.fillStyle = 'white';
+    context.fillText(this.text, this.begin.x, this.begin.y);
+    context.strokeStyle = 'black';
+    context.strokeText(this.text, this.begin.x, this.begin.y);
   }
 }
